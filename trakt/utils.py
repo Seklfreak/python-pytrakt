@@ -16,6 +16,8 @@ def slugify(value):
 
     Adapted from django.utils.text.slugify
     """
+    if value is None:
+        return None
     value = unicodedata.normalize('NFKD', value)
     # special case, "ascii" encode would just remove it
     value = value.replace("’", '-')
