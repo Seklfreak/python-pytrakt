@@ -27,7 +27,7 @@ def test_scrobbler_context_manager():
 
 
 def test_scrobbler_payload_excludes_app_metadata():
-    """scrobble payload must not include undocumented app_version/app_date fields"""
+    """scrobble payload must not include undocumented app_version/date fields"""
     import trakt.core
     guardians = Movie('Guardians of the Galaxy', year=2014)
     scrobbler = Scrobbler(guardians, 42.0, '1.0.0', '2015-02-01')
