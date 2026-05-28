@@ -504,12 +504,21 @@ class User:
                 seasons = show_data.pop('seasons')
                 full_show = TVShow(**show_item)
                 for season in seasons:
-                    ts = next(s for s in full_show.seasons if s.season == season.get('number'))
+                    ts = next(
+                        (s for s in full_show.seasons if s.season == season.get('number')),
+                        None,
+                    )
+                    if ts is None:
+                        continue
                     for ep in season.get('episodes'):
-                        te = next(e for e in ts.episodes if e.number == ep.get('number'))
+                        te = next(
+                            (e for e in ts.episodes if e.number == ep.get('number')),
+                            None,
+                        )
+                        if te is None:
+                            continue
                         ep['title'] = te.title
                         ep.update(te.ids)
-                del te, ts, full_show
                 show = TVShow(**show_item, seasons=seasons)
                 self._show_collection.append(show)
         yield self._show_collection
