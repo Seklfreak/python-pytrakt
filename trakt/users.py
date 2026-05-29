@@ -145,7 +145,7 @@ class ListDescription:
     item_count: int
     comment_count: int
     likes: int
-    user: Any
+    user: Optional[Any] = None
     creator: Optional[str] = None
 
 
