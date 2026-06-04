@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Interfaces to all of the User objects offered by the Trakt.tv API"""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Any, NamedTuple, Optional, Union
 
 from trakt.core import delete, get, post
@@ -182,13 +182,17 @@ class PublicList(DataClassMixin(ListDescription), IdsMixin):
 
     @staticmethod
     def _process_items(items):
+        # ListEntry is a frozen dataclass with a fixed set of fields, but the
+        # Trakt API periodically adds new keys to list items (e.g. "my_rating"),
+        # which would raise TypeError on construction. Keep only known fields.
+        known = {f.name for f in fields(ListEntry)} - {"data"}
         for item in items:
             if "type" not in item:
                 continue
             data = item.pop(item["type"])
             if "show" in item:
                 data["show"] = item.pop("show")
-            yield ListEntry(**item, data=data)
+            yield ListEntry(**{k: v for k, v in item.items() if k in known}, data=data)
 
 
 class UserList(DataClassMixin(ListDescription), IdsMixin):
