@@ -2,7 +2,7 @@
 """This module contains Trakt.tv sync endpoint support functions"""
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import datetime, timezone
 from typing import Any
 
@@ -385,13 +385,17 @@ def get_playback(list_type=None):
 
     items = yield uri
     results = []
+    # PlaybackEntry is a frozen dataclass with a fixed set of fields, but
+    # the Trakt API periodically adds new keys to playback items, which
+    # would raise TypeError on construction. Keep only known fields.
+    known = {f.name for f in fields(PlaybackEntry)} - {"data"}
     for item in items:
         if "type" not in item:
             continue
         data = item.pop(item["type"])
         if "show" in item:
             data["show"] = item.pop("show")
-        results.append(PlaybackEntry(**item, data=data))
+        results.append(PlaybackEntry(**{k: v for k, v in item.items() if k in known}, data=data))
 
     yield results
 

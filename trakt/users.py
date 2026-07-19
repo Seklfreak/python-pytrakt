@@ -178,14 +178,13 @@ class PublicList(DataClassMixin(ListDescription), IdsMixin):
             self._load_items()
         return self._items
 
-    @get
     def _load_items(self):
         """
         https://trakt.docs.apiary.io/#reference/lists/list-items
         """
-        data = yield f"lists/{self.trakt}/items"
+        data = paginate(f"lists/{self.trakt}/items")
         self._items = list(self._process_items(data))
-        yield self._items
+        return self._items
 
     @staticmethod
     def _process_items(items):
@@ -251,16 +250,14 @@ class UserList(DataClassMixin(ListDescription), IdsMixin):
 
         yield ulist
 
-    @get
     def get_items(self):
         """A list of the list items using class instances
         instance types: movie, show, season, episode, person
 
         """
 
-        uri = build_uri('users/{user}/lists/{id}/items',
+        data = paginate('users/{user}/lists/{id}/items',
                         user=slugify(self.creator), id=self.slug)
-        data = yield uri
 
         for item in data:
             # match list item type
@@ -289,7 +286,7 @@ class UserList(DataClassMixin(ListDescription), IdsMixin):
                 self._items.append(Person(item_data['name'],
                                           item_data['ids']['slug']))
 
-        yield self._items
+        return self._items
 
     @post
     def add_items(self, *items):
@@ -488,20 +485,19 @@ class User:
         return self._movie_collection
 
     @property
-    @get
     def show_collection(self):
         """All :class:`TVShow`'s in this :class:`User`'s library collection.
         Collection items might include blu-rays, dvds, and digital downloads.
         Protected users won't return any data unless you are friends.
         """
         if self._show_collection is None:
-            data = yield build_uri('users/{username}/collection/shows',
-                                   username=slugify(self.username),
-                                   extended='metadata')
+            data = paginate('users/{username}/collection/shows',
+                            username=slugify(self.username),
+                            extended='metadata')
             self._show_collection = []
-            for show_data in data:
+            for show_data in data or []:
                 show_item = show_data.pop('show')
-                seasons = show_data.pop('seasons')
+                seasons = show_data.pop('seasons', None) or []
                 full_show = TVShow(**show_item)
                 for season in seasons:
                     ts = next(
@@ -510,7 +506,7 @@ class User:
                     )
                     if ts is None:
                         continue
-                    for ep in season.get('episodes'):
+                    for ep in season.get('episodes') or []:
                         te = next(
                             (e for e in ts.episodes if e.number == ep.get('number')),
                             None,
@@ -521,7 +517,7 @@ class User:
                         ep.update(te.ids)
                 show = TVShow(**show_item, seasons=seasons)
                 self._show_collection.append(show)
-        yield self._show_collection
+        return self._show_collection
 
     @staticmethod
     def _build_movies(data, merge=True):
@@ -670,7 +666,6 @@ class User:
         data = yield uri
         yield data
 
-    @get
     def get_liked_lists(self, list_type=None, limit=None):
         """Get items a user likes.
 
@@ -685,10 +680,7 @@ class User:
         if list_type is not None:
             uri += f'/{list_type}'
 
-        uri = build_uri(uri, limit=limit)
-
-        data = yield uri
-        yield data
+        return paginate(uri, limit=limit)
 
     def follow(self):
         """Follow this :class:`User`"""
