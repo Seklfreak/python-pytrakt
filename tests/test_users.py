@@ -175,7 +175,7 @@ def test_liked_lists():
     sean = User('sean')
 
     lists = sean.get_liked_lists()
-    assert lists is None
+    assert lists == []
 
     lists = sean.get_liked_lists('lists')
     assert isinstance(lists, list)
