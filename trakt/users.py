@@ -579,20 +579,26 @@ class User:
         return self._watched_movies
 
     @property
-    @get
     def watched_shows(self):
         """Watched progress for all :class:`TVShow`'s in this :class:`User`'s
-        collection.
+        collection. Automatically fetches all pages.
+
+        Trakt paginates the watched endpoints since 2026-06-30, so a single
+        unpaginated request silently truncates results. Season/episode
+        progress is only included with extended=progress.
         """
         if self._watched_shows is None:
-            uri = build_uri('users/{user}/watched/shows', user=slugify(self.username))
-            data = yield uri
+            data = paginate(
+                'users/{user}/watched/shows',
+                user=slugify(self.username),
+                extended='progress',
+            )
             self._watched_shows = []
-            for show in data:
+            for show in data or []:
                 show_data = show.pop('show')
                 show_data.update(show)
                 self._watched_shows.append(TVShow(**show_data))
-        yield self._watched_shows
+        return self._watched_shows
 
     @property
     @get

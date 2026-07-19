@@ -621,7 +621,7 @@
             }
         ]
     },
-    "users/sean/watched/shows": {
+    "users/sean/watched/shows?extended=progress": {
         "GET": [
             {
                 "plays":56,
