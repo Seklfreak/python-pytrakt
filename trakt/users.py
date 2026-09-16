@@ -214,6 +214,10 @@ class UserList(DataClassMixin(ListDescription), IdsMixin):
         """Iterate over the items in this user list"""
         return self._items.__iter__()
 
+    def __len__(self):
+        """Return the number of items in this user list"""
+        return len(self._items)
+
     @classmethod
     @post
     def create(cls, name, creator, description=None, privacy='private',
