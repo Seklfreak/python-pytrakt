@@ -62,6 +62,9 @@ def test_user_list():
     instancetypes = (Movie, TVShow, TVSeason, TVEpisode, Person)
     assert all([isinstance(k, instancetypes) for k in l])
 
+    # len() agrees with what iteration yields
+    assert len(l) == len(list(l))
+
     # PUT to add and remove items from list
     l.add_items()
     for k, v in data.items():
