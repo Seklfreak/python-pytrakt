@@ -3,6 +3,10 @@ name: Sync patch branch with upstream
 # Weekly rebase of the patch branch on top of upstream/main, plus a
 # manual trigger. Force-pushes when clean; fails the run on conflict
 # (GitHub's workflow-failure email is the notification).
+#
+# GitHub disables scheduled workflows after 60 days without user activity,
+# and pushes made with GITHUB_TOKEN don't count, so the last step re-enables
+# this workflow via the API, which resets that timer.
 
 on:
   schedule:
@@ -11,13 +15,14 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   rebase:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout patch branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: fix-show-collection-stopiteration
           fetch-depth: 0
@@ -70,3 +75,9 @@ jobs:
           echo "  git rebase upstream/main   # resolve conflicts"
           echo "  git push --force-with-lease"
           exit 1
+
+      - name: Keep scheduled workflow enabled
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable "${{ github.workflow }}" --repo "${{ github.repository }}"
