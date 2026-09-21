@@ -80,4 +80,6 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow enable "${{ github.workflow }}" --repo "${{ github.repository }}"
+        # Not `gh workflow enable`: it only resolves names among disabled
+        # workflows, so it errors while this one is still active.
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/sync-with-upstream.yaml/enable"
